@@ -1,0 +1,130 @@
+{
+  "name": "AI Email Assistant - Gmail Starter",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ],
+          "readStatus": "both"
+        }
+      },
+      "id": "830c50f1-5c3a-40ba-a9a5-5ba36f1971d3",
+      "name": "Check New Gmail",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3LI6u4g7OlgBBSnZ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent\n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"You are a professional email assistant. Generate a polite email reply for this message:\\n\\n{{$json.snippet  }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"maxOutputTokens\": 500\n  }\n}",
+        "options": {}
+      },
+      "id": "37be1206-aa6b-4995-8a8d-fd07c409e32b",
+      "name": "Generate AI Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        256,
+        0
+      ],
+      "retryOnFail": false,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Check New Gmail').item.json.To }}",
+        "subject": "={{ 'Re: ' + ($('Check New Gmail').item.json.subject || 'Your email') }}",
+        "emailType": "text",
+        "message": "={{ $json.candidates[0].content.parts[0].thoughtSignature }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "2ce829e8-a481-4293-931c-ebe02af9b33f",
+      "name": "Send Reply Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        528,
+        0
+      ],
+      "webhookId": "0a0bb206-8ef8-486c-95bc-7cc84b135726",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3LI6u4g7OlgBBSnZ",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check New Gmail": {
+      "main": [
+        [
+          {
+            "node": "Generate AI Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate AI Reply": {
+      "main": [
+        [
+          {
+            "node": "Send Reply Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "7d5e0130-85e2-469d-8825-68d411271bf4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "90036cc8f7ed14d7779096f019ecc0949ab09ed17b3987c78c8a5a91d3c018d5"
+  },
+  "nodeGroups": [],
+  "id": "Vt6aFkEvZsdQFoFe",
+  "tags": []
+}
